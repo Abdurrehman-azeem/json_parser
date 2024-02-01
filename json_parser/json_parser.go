@@ -3,6 +3,7 @@ package jsonparser
 import (
 	"fmt"
 	"os"
+	"bufio"
 )
 
 func ParseFromFile(path string) bool {
@@ -13,3 +14,5 @@ func ParseFromFile(path string) bool {
 	fmt.Println(file)
 	return true
 }
+
+func Validate(file.)
