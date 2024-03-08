@@ -87,7 +87,7 @@ func TestParse(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			for _, p := range tt.paths {
 				parser := jsonparser.NewParser(p.path)
-				parser.ParseLine()
+				parser.ParseFromReader()
 			}
 			fmt.Println("\n\nTesting completed for ", tt.name, ".")
 		})

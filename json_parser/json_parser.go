@@ -3,11 +3,14 @@ package jsonparser
 import (
 	"bufio"
 	"fmt"
+	"io"
 	"os"
+
+	utils "github.com/aa/v2/utils"
 )
 
 type ParserInterface interface {
-	ParseLine()
+	ReadLine()
 }
 
 type Parser struct {
@@ -30,9 +33,14 @@ func NewParser(path string) Parser {
 	return parser
 }
 
-func (p *Parser) ParseLine() {
-	scanner := p.Scanner
-	for scanner.Scan() {
-		fmt.Println(scanner.Text())
+func (p *Parser) ParseFromReader() {
+	for line, err := utils.ReadLine(p.Scanner); err == nil; line, err = utils.ReadLine(p.Scanner) {
+		if err != nil && err != io.EOF {
+			fmt.Errorf("Error encountered while reading from file. \n", err)
+		}
+		tokens := utils.Tokenize(line)
+		for _, token := range tokens {
+			fmt.Println(token)
+		}
 	}
 }
