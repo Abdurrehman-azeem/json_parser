@@ -14,8 +14,13 @@ type ParserInterface interface {
 }
 
 type Parser struct {
-	Scanner   *bufio.Scanner
-	Ancestors []string
+	Scanner                     *bufio.Scanner
+	Ancestors                   []string
+	CurlyBracketCount           int
+	SquareBracketCount          int
+	EncounteredLeftCurlyBracket bool
+	PreceededByString           bool
+	Res                         map[string]any
 }
 
 func NewParser(path string) Parser {
@@ -34,13 +39,26 @@ func NewParser(path string) Parser {
 }
 
 func (p *Parser) ParseFromReader() {
-	for line, err := utils.ReadLine(p.Scanner); err == nil; line, err = utils.ReadLine(p.Scanner) {
+	li := 0
+	for line, EOF, err := utils.ReadLine(p.Scanner); EOF; line, EOF, err = utils.ReadLine(p.Scanner) {
+		li++
 		if err != nil && err != io.EOF {
-			fmt.Errorf("Error encountered while reading from file. \n", err)
+			utils.EscalateError(fmt.Errorf("Error encountered while reading from file. \n", err))
 		}
-		tokens := utils.Tokenize(line)
-		for _, token := range tokens {
-			fmt.Println(token)
+		for idx, char := range line {
+			switch char {
+			case '{':
+				if p.EncounteredLeftCurlyBracket == true && !p.PreceededByString {
+					utils.EscalateError(fmt.Errorf("Invalid '", char, "' encountered at line ", li, " and column ", idx, "."))
+				}
+				p.CurlyBracketCount++
+			case '}':
+				p.CurlyBracketCount--
+			}
+		}
+
+		if p.CurlyBracketCount != 0 {
+			utils.EscalateError(fmt.Errorf("Invalid JSON, due to '{' or '}' mismatch."))
 		}
 	}
 }
