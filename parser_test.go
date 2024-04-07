@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	jsonparser "github.com/aa/v2/json_parser"
+	"github.com/stretchr/testify/assert"
 )
 
 func TestParse(t *testing.T) {
@@ -88,7 +89,7 @@ func TestParse(t *testing.T) {
 			for _, p := range tt.paths {
 				parser := jsonparser.NewParser(p.path)
 				parser.ParseFromReader()
-
+				assert.Equal(t, parser.Valid, p.valid)
 			}
 			fmt.Println("\n\nTesting completed for ", tt.name, ".")
 		})

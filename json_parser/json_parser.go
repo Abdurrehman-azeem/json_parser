@@ -3,24 +3,25 @@ package jsonparser
 import (
 	"bufio"
 	"fmt"
-	"io"
 	"os"
 
 	utils "github.com/aa/v2/utils"
 )
 
-type ParserInterface interface {
-	ReadLine()
-}
-
-type Parser struct {
-	Scanner                     *bufio.Scanner
-	Ancestors                   []string
+type ParserOptions struct {
 	CurlyBracketCount           int
 	SquareBracketCount          int
 	EncounteredLeftCurlyBracket bool
-	PreceededByString           bool
-	Res                         map[string]any
+	ParsingString               bool
+	ParsingNumber               bool
+}
+
+type Parser struct {
+	Scanner   *bufio.Scanner
+	Ancestors []string
+	Options   ParserOptions
+	Res       map[string]any
+	Valid     bool
 }
 
 func NewParser(path string) Parser {
@@ -42,23 +43,75 @@ func (p *Parser) ParseFromReader() {
 	li := 0
 	for line, EOF, err := utils.ReadLine(p.Scanner); EOF; line, EOF, err = utils.ReadLine(p.Scanner) {
 		li++
-		if err != nil && err != io.EOF {
-			utils.EscalateError(fmt.Errorf("Error encountered while reading from file. \n", err))
-		}
-		for idx, char := range line {
-			switch char {
-			case '{':
-				if p.EncounteredLeftCurlyBracket == true && !p.PreceededByString {
-					utils.EscalateError(fmt.Errorf("Invalid '", char, "' encountered at line ", li, " and column ", idx, "."))
-				}
-				p.CurlyBracketCount++
-			case '}':
-				p.CurlyBracketCount--
-			}
+		if err != nil {
+			fmt.Println("Error encountered at line ", li, ".\n", err)
+			return
 		}
 
-		if p.CurlyBracketCount != 0 {
-			utils.EscalateError(fmt.Errorf("Invalid JSON, due to '{' or '}' mismatch."))
+		err = ParseLine(line, p)
+		if err != nil {
+			fmt.Println("Error encountered at line ", li, ".\n", err)
 		}
 	}
+	err := CurlyBracketVerifier(p.Options.CurlyBracketCount)
+	if err == nil {
+		p.Valid = true
+	} else {
+		fmt.Println(err)
+		p.Valid = false
+	}
+}
+
+func ParseLine(line string, p *Parser) error {
+	filteredText := ""
+	for _, char := range line {
+		switch char {
+		case '{':
+			if !p.Options.ParsingString {
+				p.Options.CurlyBracketCount++
+				continue
+			}
+			filteredText = filteredText + string(char)
+		case '}':
+			if !p.Options.ParsingString {
+				p.Options.CurlyBracketCount--
+				continue
+			}
+			filteredText = filteredText + string(char)
+		case '[':
+			p.Options.SquareBracketCount++
+		case ']':
+			p.Options.SquareBracketCount--
+		case '"':
+			p.Options.ParsingString = !p.Options.ParsingString
+		case '\n':
+		case '\t':
+			continue
+		case ' ':
+			if p.Options.ParsingString {
+				filteredText = filteredText + string(char)
+			}
+		case '0':
+		case '1':
+		case '2':
+		case '3':
+		case '4':
+		case '5':
+		case '6':
+		case '7':
+		case '8':
+		case '9':
+			fmt.Println("number")
+		}
+	}
+	return nil
+}
+
+func CurlyBracketVerifier(count int) error {
+	if count > 0 {
+		return fmt.Errorf("Error: Missing '}'.")
+	} else if count < 0 {
+		return fmt.Errorf("Error: Missing '{'.")
+	}
+	return nil
 }
