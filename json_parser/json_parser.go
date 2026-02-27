@@ -1,4 +1,4 @@
-package jsonparser
+package json_parser
 
 import (
 	"bufio"

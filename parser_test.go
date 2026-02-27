@@ -8,7 +8,7 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestParse(t *testing.T) {
+func TestParse123(t *testing.T) {
 	type expectation struct {
 		path  string
 		valid bool
