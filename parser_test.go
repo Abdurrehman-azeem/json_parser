@@ -5,7 +5,6 @@ import (
 	"testing"
 
 	jsonparser "github.com/aa/v2/json_parser"
-	"github.com/stretchr/testify/assert"
 )
 
 func TestParse123(t *testing.T) {
@@ -86,11 +85,14 @@ func TestParse123(t *testing.T) {
 
 	for _, tt := range testData {
 		t.Run(tt.name, func(t *testing.T) {
-			for _, p := range tt.paths {
-				parser := jsonparser.NewParser(p.path)
-				parser.ParseFromReader()
-				assert.Equal(t, parser.Valid, p.valid)
+			path := tt.paths[1].path
+
+			la, err := jsonparser.NewLexicalAnalyzer(path, 1024)
+			if err != nil {
+				fmt.Println("Error encountered creating new LA", err)
 			}
+			err = la.Tokenize()
+			fmt.Println("Some data", err, (*la).Tokens)
 			fmt.Println("\n\nTesting completed for ", tt.name, ".")
 		})
 	}

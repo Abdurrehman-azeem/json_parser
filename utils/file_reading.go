@@ -73,6 +73,10 @@ func (fs *FileReader) Next() (char byte, err error) {
 	return fs.currLine.line[fs.currLine.currIndex], nil
 }
 
+func (fs *FileReader) CurrChar() byte {
+	return byte(fs.currLine.line[fs.currLine.currIndex])
+}
+
 func (fs *FileReader) Close() error {
 	err := fs.file.Close()
 
