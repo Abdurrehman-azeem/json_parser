@@ -92,7 +92,7 @@ func TestParse123(t *testing.T) {
 				fmt.Println("Error encountered creating new LA", err)
 			}
 			err = la.Tokenize()
-			fmt.Println("Some data", err, (*la).Tokens)
+			fmt.Println("Some data", err, la.Tokens)
 			fmt.Println("\n\nTesting completed for ", tt.name, ".")
 		})
 	}

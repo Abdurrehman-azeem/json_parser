@@ -12,6 +12,7 @@ type FileReader struct {
 	ChunkSize int
 
 	currLine ReadLine
+	nextLine string
 }
 
 type ReadLine struct {
@@ -44,24 +45,30 @@ func NewFileReader(config FileReaderConfig) (*FileReader, error) {
 	}
 
 	if config.ChunkSize == 0 {
-		return &FileReader{file, 1024, readLine}, nil
+		return &FileReader{file, 1024, readLine, ""}, nil
 	}
 
-	return &FileReader{file, config.ChunkSize, readLine}, nil
+	return &FileReader{file, config.ChunkSize, readLine, ""}, nil
 }
 
 func (fs *FileReader) Next() (char byte, err error) {
 	if !fs.currLine.scanned {
 		fs.currLine.scanner.Scan()
 		fs.currLine.line = fs.currLine.scanner.Text()
+		if fs.currLine.scanner.Scan() {
+			fs.nextLine = fs.currLine.scanner.Text()
+		} else {
+			fs.nextLine = ""
+		}
 		fs.currLine.currIndex = 0
 		fs.currLine.scanned = true
 		return fs.currLine.line[fs.currLine.currIndex], nil
 	}
 
 	if fs.currLine.currIndex == len(fs.currLine.line) - 1 {
-		if dataExists := fs.currLine.scanner.Scan(); dataExists {
-			fs.currLine.line = fs.currLine.scanner.Text()
+		if fs.currLine.scanner.Scan() || fs.nextLine != "" {
+			fs.currLine.line = fs.nextLine
+			fs.nextLine = fs.currLine.scanner.Text()
 			fs.currLine.currIndex = 0
 			return fs.currLine.line[len(fs.currLine.line) - 1], nil
 		} else {
@@ -71,6 +78,18 @@ func (fs *FileReader) Next() (char byte, err error) {
 
 	fs.currLine.currIndex++
 	return fs.currLine.line[fs.currLine.currIndex], nil
+}
+
+func (fs *FileReader) Peek() byte {
+	if fs.currLine.currIndex < len(fs.currLine.line) - 1 {
+		return byte(fs.currLine.line[fs.currLine.currIndex + 1])
+	}
+
+	if fs.currLine.currIndex == len(fs.currLine.line) - 1 && fs.nextLine != "" {
+		return byte(fs.nextLine[0])
+	}
+
+	return 0
 }
 
 func (fs *FileReader) CurrChar() byte {
